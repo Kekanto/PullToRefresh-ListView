@@ -1,16 +1,31 @@
 package eu.erikw;
 
-import android.content.Context;
-import android.util.AttributeSet;
-import android.util.Log;
-import android.view.*;
-import android.view.ViewTreeObserver.OnGlobalLayoutListener;
-import android.view.animation.*;
-import android.view.animation.Animation.AnimationListener;
-import android.widget.*;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import android.content.Context;
+import android.content.res.TypedArray;
+import android.location.Location;
+import android.util.AttributeSet;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.view.ViewTreeObserver.OnGlobalLayoutListener;
+import android.view.animation.Animation;
+import android.view.animation.Animation.AnimationListener;
+import android.view.animation.LinearInterpolator;
+import android.view.animation.OvershootInterpolator;
+import android.view.animation.RotateAnimation;
+import android.view.animation.TranslateAnimation;
+import android.widget.AdapterView;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 /**
  * A generic, customizable Android ListView implementation that has 'Pull to Refresh' functionality.
@@ -33,7 +48,7 @@ import java.util.Date;
  */
 public class PullToRefreshListView extends ListView{
 
-    private static final float PULL_RESISTANCE                 = 1.7f;
+    private static final float DEFAULT_PULL_RESISTANCE         = 1.7f;
     private static final int   BOUNCE_ANIMATION_DURATION       = 700;
     private static final int   BOUNCE_ANIMATION_DELAY          = 100;
     private static final float BOUNCE_OVERSHOOT_TENSION        = 1.4f;
@@ -86,23 +101,25 @@ public class PullToRefreshListView extends ListView{
     private OnItemClickListener     onItemClickListener;
     private OnItemLongClickListener onItemLongClickListener;
     private OnRefreshListener       onRefreshListener;
+    
+    private float                   mPullResistance = DEFAULT_PULL_RESISTANCE;
 
     private float mScrollStartY;
     private final int IDLE_DISTANCE = 5;
 
     public PullToRefreshListView(Context context){
         super(context);
-        init();
+        init(context, null);
     }
 
     public PullToRefreshListView(Context context, AttributeSet attrs){
         super(context, attrs);
-        init();
+        init(context, attrs);
     }
 
     public PullToRefreshListView(Context context, AttributeSet attrs, int defStyle){
         super(context, attrs, defStyle);
-        init();
+        init(context, attrs);
     }
 
     @Override
@@ -221,8 +238,27 @@ public class PullToRefreshListView extends ListView{
             text.setText(refreshingText);
         }
     }
+    
+    /**
+     * Sets the new pull resistance of the list. It should be a value
+     * greater than 0.0f. The greater the value, more resistance user will
+     * encounter to pull the list
+     * 
+     * @param resistance Non-zero positive value with the pull resistnace
+     */
+    public void setPullResistance (float resistance) {
+    	if (resistance < 0.0f) {
+    		resistance = -resistance;
+    	}
+    	
+    	mPullResistance = resistance;
+    }
+    
+    public float getPullResistance () {
+    	return mPullResistance;
+    }
 
-    private void init(){
+    private void init(Context context, AttributeSet attrs){
         setVerticalFadingEdgeEnabled(false);
 
         headerContainer = (LinearLayout) LayoutInflater.from(getContext()).inflate(R.layout.ptr_header, null);
@@ -254,6 +290,16 @@ public class PullToRefreshListView extends ListView{
         ViewTreeObserver vto = header.getViewTreeObserver();
         vto.addOnGlobalLayoutListener(new PTROnGlobalLayoutListener());
 
+        // Process custom attributes of the component
+        if (context != null && attrs != null) {
+        	TypedArray a = this.getContext().getTheme().obtainStyledAttributes(
+        			attrs, R.styleable.PullToRefreshListView, 0, 0);
+        	try {
+        		setPullResistance(a.getFloat(R.styleable.PullToRefreshListView_pullResistance, DEFAULT_PULL_RESISTANCE));
+        	} finally {
+        		a.recycle();
+        	}
+        }
         super.setOnItemClickListener(new PTROnItemClickListener());
         super.setOnItemLongClickListener(new PTROnItemLongClickListener());
     }
@@ -307,9 +353,9 @@ public class PullToRefreshListView extends ListView{
                 if(previousY != -1 && getFirstVisiblePosition() == 0 && Math.abs(mScrollStartY-event.getY()) > IDLE_DISTANCE){
                     float y = event.getY();
                     float diff = y - previousY;
-                    if(diff > 0) diff /= PULL_RESISTANCE;
+                    if(diff > 0) diff /= mPullResistance;
                     previousY = y;
-
+                    
                     int newHeaderPadding = Math.max(Math.round(headerPadding + diff), -header.getHeight());
 
                     if(newHeaderPadding != headerPadding && state != State.REFRESHING){
