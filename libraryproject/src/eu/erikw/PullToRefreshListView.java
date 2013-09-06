@@ -5,8 +5,8 @@ import java.util.Date;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.location.Location;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -318,18 +318,12 @@ public class PullToRefreshListView extends ListView{
                 && (state == State.REFRESHING || getAnimation() != null && !getAnimation().hasEnded())){
             return true;
         }
+        
+        Log.d("LALA", String.format("Ac: %d Prev y: %.2f", event.getAction(), previousY));
 
         switch(event.getAction()){
             case MotionEvent.ACTION_DOWN:
-                if(getFirstVisiblePosition() == 0){
-                	previousY = event.getY();
-                }
-                else {
-                	previousY = -1;
-                }
-                
-                // Remember where have we started
-                mScrollStartY = event.getY();
+                resetMovement(event);
                 
                 break;
 
@@ -373,6 +367,8 @@ public class PullToRefreshListView extends ListView{
                             image.startAnimation(reverseFlipAnimation);
                         }
                     }
+                } else {
+                    resetMovement(event);	
                 }
 
                 break;
@@ -400,6 +396,22 @@ public class PullToRefreshListView extends ListView{
         bounceAnimation.setAnimationListener(new HeaderAnimationListener(yTranslate));
 
         startAnimation(bounceAnimation);
+    }
+    
+    /**
+     * Reset the pull to refresh state
+     * @param event
+     */
+    private void resetMovement (MotionEvent event) {
+    	if(getFirstVisiblePosition() == 0){
+        	previousY = event.getY();
+        }
+        else {
+        	previousY = -1;
+        }
+        
+        // Remember where have we started
+        mScrollStartY = event.getY();
     }
 
     private void resetHeader(){
