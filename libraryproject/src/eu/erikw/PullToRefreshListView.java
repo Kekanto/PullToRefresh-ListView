@@ -6,7 +6,6 @@ import java.util.Date;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -319,8 +318,6 @@ public class PullToRefreshListView extends ListView{
             return true;
         }
         
-        Log.d("LALA", String.format("Ac: %d Prev y: %.2f", event.getAction(), previousY));
-
         switch(event.getAction()){
             case MotionEvent.ACTION_DOWN:
                 resetMovement(event);
@@ -368,7 +365,7 @@ public class PullToRefreshListView extends ListView{
                         }
                     }
                 } else {
-                    resetMovement(event);	
+//                    resetMovement(event);	
                 }
 
                 break;
