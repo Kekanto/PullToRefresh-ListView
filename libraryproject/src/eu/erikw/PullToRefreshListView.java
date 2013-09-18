@@ -365,7 +365,7 @@ public class PullToRefreshListView extends ListView{
                         }
                     }
                 } else {
-//                    resetMovement(event);	
+                    resetMovement(event);	
                 }
 
                 break;
@@ -391,7 +391,6 @@ public class PullToRefreshListView extends ListView{
         bounceAnimation.setFillBefore(true);
         bounceAnimation.setInterpolator(new OvershootInterpolator(BOUNCE_OVERSHOOT_TENSION));
         bounceAnimation.setAnimationListener(new HeaderAnimationListener(yTranslate));
-
         startAnimation(bounceAnimation);
     }
     
